@@ -1,71 +1,83 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+1. create a react app, create git repo through terminal, npm install before push
 
-## Available Scripts
+2. Create Lambda function to handle logic (use these headers to handle cors: https://codeburst.io/react-js-api-calls-to-aws-lambda-api-gateway-and-dealing-with-cors-89fb897eb04d)
 
-In the project directory, you can run:
+headers: {
+            "Content-Type" : "application/json",
+            "Access-Control-Allow-Headers" : "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods" : "OPTIONS,POST",
+            "Access-Control-Allow-Credentials" : true,
+            "Access-Control-Allow-Origin" : "*",
+            "X-Requested-With" : "*"
+        }
 
-### `npm start`
+3. Create API Gateway with CRUD endpoints with proxies
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+4. deploy react app to amplify
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
 
-### `npm test`
+-----LAMBDA CODE---
+// https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-dynamodb/index.html
+// https://medium.com/aws-lambda-serverless-developer-guide-with-hands/build-crud-restful-microservices-with-aws-lambda-api-gateway-dynamodb-with-aws-sdk-js-v3-408fa2f85048
+// https://www.readysetcloud.io/blog/allen.helton/lessons-learned-from-switching-to-aws-sdk-v3/
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+import { DynamoDBClient, BatchExecuteStatementCommand } from "@aws-sdk/client-dynamodb";
+import { BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
+import { GetItemCommand } from "@aws-sdk/client-dynamodb";
 
-### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+const client = new DynamoDBClient({ region: "us-east-1" });
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-### `npm run eject`
+export const handler = async(event) => {
+    // TODO implement
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+    let method = event.httpMethod;
+    let message = 'Hello from lambda ' + method;
+    const dynamodb = new DynamoDBClient({ region: "us-east-1" });
+    
+    
+    try {
+        switch (event.httpMethod) {
+            case 'GET':
+                message = 'It is a get request';
+                try {
+                    let params = {
+                        TableName: 'venues',
+                        Key: marshall({ 'venueId': '1' })
+                    }
+                    const { Item } = await dynamodb.send(new GetItemCommand(params));
+                    console.log(Item);
+                    message = Item ? unmarshall(Item) : {};
+                    // return (Item) ? unmarshall(Item) : {};
+                    
+                } catch (error) {
+                    console.error(error);
+                    throw error;
+                }
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-# React-On-Amplify
+                break;
+            case 'POST':
+                message = 'It is a post request'
+                break;
+        }
+    }
+    catch (error) {
+        message = 'Something failed...';
+    }
+    
+    const response = {
+        statusCode: 200,
+        body: JSON.stringify(message),
+        headers: {
+            "Content-Type" : "application/json",
+            "Access-Control-Allow-Headers" : "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods" : "OPTIONS,POST",
+            "Access-Control-Allow-Credentials" : true,
+            "Access-Control-Allow-Origin" : "*",
+            "X-Requested-With" : "*"
+    }
+    };
