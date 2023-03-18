@@ -1,4 +1,7 @@
 import EventCard from '../Components/EventCard'
+import React, { Component } from 'react';
+import axios from 'axios';
+
 export default function Home() {
   let eventsArray = [
     {
@@ -18,9 +21,18 @@ export default function Home() {
     }];
 
   const callApi = async () => {
-    let response = await fetch("https://fursrb2ri3.execute-api.us-east-1.amazonaws.com/default/venues-function", { method: "GET" })
-    response = response.json();
-    console.log(response);
+    const api = 'https://fursrb2ri3.execute-api.us-east-1.amazonaws.com/default/venues-function';
+    const data = { "name" : "Mike" };
+    axios
+      .get(api
+        // , data
+        )
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
 
   const searchFunction = () => {
